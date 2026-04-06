@@ -3,38 +3,111 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pashto AI Song Generator</title>
+<title>Pashto AI Song Generator PRO</title>
 
 <style>
-/* Body Styling */
-body{
-    font-family:'Segoe UI', sans-serif;
-    background: linear-gradient(120deg, #0b1c2c, #1f3a5f);
-    color:white;
-    text-align:center;
-    margin:0;
-    padding:0;
+body{font-family:Segoe UI;background:linear-gradient(120deg,#0b1c2c,#1f3a5f);color:white;text-align:center;margin:0}
+.container{max-width:850px;margin:auto;padding:20px}
+.logo{font-size:32px;font-weight:bold;color:#ff9800;margin-bottom:20px}
+textarea{width:90%;padding:15px;margin:10px;border-radius:10px;border:none;font-size:16px}
+button{background:#ff9800;color:white;padding:15px 25px;border:none;border-radius:10px;font-size:18px;margin:6px;cursor:pointer}
+button:hover{background:#e68a00}
+audio{margin-top:20px;width:90%}
+select{padding:12px;border-radius:10px;border:none;margin:10px;font-size:16px}
+#loading{color:#00ffcc;margin-top:15px}
+</style>
+</head>
+
+<body>
+<div class="container">
+<div class="logo">🎵 Pashto AI Song Generator PRO</div>
+
+<select id="singer">
+<option value="male">Male Singer</option>
+<option value="female">Female Singer</option>
+<option value="chorus">Chorus Group</option>
+</select>
+
+<!-- PASHTO INSTRUMENTS ONLY -->
+<select id="instrument">
+<option value="rubab">Rabab</option>
+<option value="mangey">Mangey</option>
+<option value="tabla">Tabla</option>
+<option value="harmonium">Harmonium</option>
+<option value="sarangi">Sarangi</option>
+<option value="sitar">Sitar</option>
+<option value="dhol">Dhol</option>
+<option value="tumbak">Tumbak</option>
+<option value="bansuri flute">Bansuri Flute</option>
+<option value="full pashto orchestra">Full Pashto Orchestra</option>
+</select>
+
+<select id="quality">
+<option value="studio">Studio Quality</option>
+<option value="live">Live Performance</option>
+</select>
+
+<h3>Lyrics</h3>
+<textarea id="lyrics" rows="6" maxlength="5000"></textarea>
+
+<h3>Style Prompt</h3>
+<textarea id="style" rows="3" maxlength="2000"></textarea>
+
+<button onclick="generateSong()">🎶 Generate Song</button>
+<button onclick="downloadSong()" id="downloadBtn" style="display:none">⬇ Download</button>
+
+<div id="loading"></div>
+<audio id="player" controls></audio>
+</div>
+
+<script>
+let audioBlob;
+
+function cleanText(text){
+  return text.replace(/[\u200B-\u200F\u202A-\u202E]/g,"").replace(/\s+/g," ").trim();
 }
 
-.container{
-    max-width: 800px;
-    margin:auto;
-    padding:20px;
+async function generateSong(){
+const lyrics = cleanText(document.getElementById("lyrics").value);
+const style  = cleanText(document.getElementById("style").value);
+const singer = document.getElementById("singer").value;
+const inst   = document.getElementById("instrument").value;
+const quality= document.getElementById("quality").value;
+
+if(lyrics.length<5){ alert("Please enter lyrics"); return; }
+
+document.getElementById("loading").innerHTML="⏳ Generating Pashto song...";
+
+let prompt = `Traditional Pashto ${quality} song using ${inst}. ${singer} voice. Lyrics: ${lyrics}. Style: ${style}`;
+
+try{
+const response = await fetch("https://api-inference.huggingface.co/models/facebook/musicgen-small",{
+method:"POST",
+headers:{
+"Authorization":"Bearer YOUR_HUGGINGFACE_API_KEY",
+"Content-Type":"application/json"
+},
+body:JSON.stringify({inputs:prompt})
+});
+
+audioBlob = await response.blob();
+document.getElementById("player").src = URL.createObjectURL(audioBlob);
+document.getElementById("loading").innerHTML="✅ Song Ready";
+document.getElementById("downloadBtn").style.display="inline-block";
+}catch{
+document.getElementById("loading").innerHTML="❌ Error generating";
+}
 }
 
-/* Logo Section */
-.logo{
-    font-size: 32px;
-    font-weight:bold;
-    color:#ff9800;
-    margin-bottom:20px;
+function downloadSong(){
+const a=document.createElement("a");
+a.href=URL.createObjectURL(audioBlob);
+a.download="Pashto_AI_Song.mp3";
+a.click();
 }
-
-/* Textareas */
-textarea{
-    width:90%;
-    padding:15px;
-    margin:10px 0;
+</script>
+</body>
+</html>    margin:10px 0;
     border-radius:10px;
     border:none;
     font-size:16px;
