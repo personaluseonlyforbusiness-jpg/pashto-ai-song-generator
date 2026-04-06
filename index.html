@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pashto AI Song Generator</title>
+
+<style>
+/* Body Styling */
+body{
+    font-family:'Segoe UI', sans-serif;
+    background: linear-gradient(120deg, #0b1c2c, #1f3a5f);
+    color:white;
+    text-align:center;
+    margin:0;
+    padding:0;
+}
+
+.container{
+    max-width: 800px;
+    margin:auto;
+    padding:20px;
+}
+
+/* Logo Section */
+.logo{
+    font-size: 32px;
+    font-weight:bold;
+    color:#ff9800;
+    margin-bottom:20px;
+}
+
+/* Textareas */
+textarea{
+    width:90%;
+    padding:15px;
+    margin:10px 0;
+    border-radius:10px;
+    border:none;
+    font-size:16px;
+    resize:none;
+}
+
+/* Buttons */
+button{
+    background:#ff9800;
+    color:white;
+    padding:15px 25px;
+    border:none;
+    border-radius:10px;
+    font-size:18px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    background:#e68a00;
+}
+
+/* Audio Player */
+audio{
+    margin-top:20px;
+    width:90%;
+    border-radius:10px;
+}
+
+/* Loading Animation */
+#loading{
+    margin-top:15px;
+    font-size:18px;
+    color:#00ffcc;
+}
+
+/* Footer */
+footer{
+    margin-top:40px;
+    font-size:14px;
+    color:#bbb;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<div class="logo">🎵 Pashto AI Song Generator</div>
+
+<h3>Pashto Lyrics (Max 5000 characters)</h3>
+<textarea id="lyrics" maxlength="5000" rows="6"
+placeholder="یوازې پښتو یا Roman Pashto ولیکئ..."></textarea>
+
+<h3>Style Prompt (Max 2000 characters)</h3>
+<textarea id="style" maxlength="2000" rows="3"
+placeholder="Example: Traditional Pashto rubab, mangey, tabla, male singer Peshawari accent"></textarea>
+
+<br>
+<button onclick="generateSong()">🎶 Generate Song</button>
+<button onclick="downloadSong()" id="downloadBtn" style="display:none;">⬇️ Download MP3</button>
+
+<div id="loading"></div>
+<audio id="player" controls></audio>
+
+<footer>
+Designed by YourName | Free AI Pashto Song Generator
+</footer>
+</div>
+
+<script>
+// Global variable for blob
+let audioBlob;
+
+// Pashto-only checker (basic)
+function isPashtoText(text){
+    const pashtoRegex = /^[\u0600-\u06FF\s0-9a-zA-Z؟،!؟]*$/;
+    return pashtoRegex.test(text);
+}
+
+async function generateSong(){
+    const lyrics = document.getElementById("lyrics").value.trim();
+    const style = document.getElementById("style").value.trim();
+    
+    if(lyrics.length<10){
+        alert("Please enter Pashto lyrics");
+        return;
+    }
+    
+    if(!isPashtoText(lyrics)){
+        alert("Please enter only Pashto text (Roman or Pashto script)");
+        return;
+    }
+
+    document.getElementById("loading").innerHTML="⏳ Generating song... This may take 1-2 minutes";
+    document.getElementById("downloadBtn").style.display="none";
+    
+    try{
+        const response = await fetch(
+            "https://api-inference.huggingface.co/models/facebook/musicgen-small",
+            {
+                method:"POST",
+                headers:{
+                    "Authorization":"Bearer YOUR_HUGGINGFACE_API_KEY",
+                    "Content-Type":"application/json"
+                },
+                body: JSON.stringify({
+                    inputs:`Pashto traditional song with rubab, mangey, tabla. Male singer Peshawari accent. Lyrics: ${lyrics}. Style: ${style}`
+                })
+            }
+        );
+
+        audioBlob = await response.blob();
+        const url = URL.createObjectURL(audioBlob);
+        document.getElementById("player").src = url;
+        document.getElementById("loading").innerHTML="✅ Song Ready";
+        document.getElementById("downloadBtn").style.display="inline-block";
+    }
+    catch(err){
+        console.error(err);
+        document.getElementById("loading").innerHTML="❌ Error generating song";
+    }
+}
+
+// Download function
+function downloadSong(){
+    if(!audioBlob) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(audioBlob);
+    a.download = "Pashto_AI_Song.mp3";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+</script>
+
+</body>
+</html>
